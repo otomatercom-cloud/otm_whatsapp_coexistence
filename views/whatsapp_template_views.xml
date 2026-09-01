@@ -16,6 +16,8 @@
                             <field name="language"/>
                             <field name="category"/>
                             <field name="status"/>
+                            <field name="raw_category" invisible="category != 'other'"/>
+                            <field name="raw_status" invisible="status != 'other'"/>
                         </group>
                         <group>
                             <field name="meta_template_id"/>

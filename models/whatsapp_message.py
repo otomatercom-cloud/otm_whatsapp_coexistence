@@ -178,6 +178,13 @@ class OtmWhatsappMessage(models.Model):
                 "error_code": str(err.get("code", "")),
                 "error_message": err.get("title") or err.get("message") or "",
             }
+        elif new_state:
+            # Safe by construction (vals stays empty, nothing is written) -
+            # but logged so a new Meta status value (e.g. "deleted",
+            # "warning") is visible instead of silently dropped, matching
+            # the observability added for the coexistence_status /
+            # template category+status mapping fixes.
+            _logger.info("WhatsApp: unhandled message status value %r - no state change applied", new_state)
         # Never regress a message backward (e.g. a late "sent" arriving after "read")
         state_order = ["queued", "sent", "delivered", "read", "failed"]
         if vals and (

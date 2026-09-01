@@ -126,8 +126,10 @@ class OtmWhatsappIntegration(models.Model):
                 "integration_id": self.id,
                 "template_name": tpl.get("name"),
                 "language": tpl.get("language"),
-                "category": (tpl.get("category") or "utility").lower(),
-                "status": (tpl.get("status") or "pending").lower(),
+                "category": Template._map_category(tpl.get("category")),
+                "status": Template._map_status(tpl.get("status")),
+                "raw_category": tpl.get("category") or False,
+                "raw_status": tpl.get("status") or False,
                 "meta_template_id": tpl.get("id"),
                 "components_json": str(tpl.get("components")),
             }
@@ -135,6 +137,41 @@ class OtmWhatsappIntegration(models.Model):
                 existing.write(vals)
             else:
                 Template.create(vals)
+
+    # Meta's phone-numbers API returns `code_verification_status` as one of
+    # a small set of UPPERCASE enum strings (VERIFIED / NOT_VERIFIED /
+    # EXPIRED) - these do NOT match our own coexistence_status Selection
+    # values and writing them in raw crashes with
+    # `ValueError: Wrong value for otm.whatsapp.phone.coexistence_status`
+    # (confirmed against a real production sync against a live WABA -
+    # NOT_VERIFIED was the value that crashed). Fixed by mapping through an
+    # explicit table with a safe, never-crashing fallback instead of
+    # passing Meta's raw string straight into the Selection field.
+    _META_VERIFICATION_STATUS_MAP = {
+        "VERIFIED": "platform_only",
+        "NOT_VERIFIED": "pending",
+        "EXPIRED": "error",
+    }
+
+    def _map_coexistence_status(self, num):
+        """Never raises, never writes an unmapped raw Meta value into the
+        Selection field - unmapped values log a warning (so a new Meta enum
+        value shows up in the logs immediately, not as a crashed sync) and
+        fall back to 'pending' rather than failing the whole batch."""
+        if num.get("platform_type") == "CLOUD_API" or num.get("is_official_business_account"):
+            return "enabled"
+        raw = num.get("code_verification_status")
+        mapped = self._META_VERIFICATION_STATUS_MAP.get(raw)
+        if mapped:
+            return mapped
+        if raw:
+            _logger.warning(
+                "WhatsApp: unmapped Meta code_verification_status %r for a synced "
+                "phone number - defaulting coexistence_status to 'pending'. Add a "
+                "mapping in whatsapp_integration.py._META_VERIFICATION_STATUS_MAP.",
+                raw,
+            )
+        return "pending"
 
     def action_sync_numbers(self):
         """Pull phone numbers from Meta's WABA and create/update otm.whatsapp.phone records.
@@ -158,12 +195,7 @@ class OtmWhatsappIntegration(models.Model):
                     "display_phone_number": num.get("display_phone_number") or "",
                     "verified_name": num.get("verified_name") or "",
                     "quality_rating": num.get("quality_rating") or "",
-                    "coexistence_status": (
-                        "enabled"
-                        if num.get("platform_type") == "CLOUD_API"
-                        or num.get("is_official_business_account")
-                        else num.get("code_verification_status", "pending")
-                    ),
+                    "coexistence_status": rec._map_coexistence_status(num),
                     "last_sync": fields.Datetime.now(),
                 }
                 if existing:
