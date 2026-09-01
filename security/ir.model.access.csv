@@ -1,0 +1,20 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_otm_whatsapp_integration_admin,otm.whatsapp.integration admin,model_otm_whatsapp_integration,group_whatsapp_administrator,1,1,1,1
+access_otm_whatsapp_integration_manager,otm.whatsapp.integration manager,model_otm_whatsapp_integration,group_whatsapp_manager,1,0,0,0
+access_otm_whatsapp_phone_admin,otm.whatsapp.phone admin,model_otm_whatsapp_phone,group_whatsapp_administrator,1,1,1,1
+access_otm_whatsapp_phone_manager,otm.whatsapp.phone manager,model_otm_whatsapp_phone,group_whatsapp_manager,1,1,0,0
+access_otm_whatsapp_phone_user,otm.whatsapp.phone user,model_otm_whatsapp_phone,group_whatsapp_user,1,0,0,0
+access_otm_whatsapp_contact_admin,otm.whatsapp.contact admin,model_otm_whatsapp_contact,group_whatsapp_administrator,1,1,1,1
+access_otm_whatsapp_contact_manager,otm.whatsapp.contact manager,model_otm_whatsapp_contact,group_whatsapp_manager,1,1,1,0
+access_otm_whatsapp_contact_user,otm.whatsapp.contact user,model_otm_whatsapp_contact,group_whatsapp_user,1,1,1,0
+access_otm_whatsapp_conversation_admin,otm.whatsapp.conversation admin,model_otm_whatsapp_conversation,group_whatsapp_administrator,1,1,1,1
+access_otm_whatsapp_conversation_manager,otm.whatsapp.conversation manager,model_otm_whatsapp_conversation,group_whatsapp_manager,1,1,1,0
+access_otm_whatsapp_conversation_user,otm.whatsapp.conversation user,model_otm_whatsapp_conversation,group_whatsapp_user,1,1,1,0
+access_otm_whatsapp_message_admin,otm.whatsapp.message admin,model_otm_whatsapp_message,group_whatsapp_administrator,1,1,1,1
+access_otm_whatsapp_message_manager,otm.whatsapp.message manager,model_otm_whatsapp_message,group_whatsapp_manager,1,1,1,0
+access_otm_whatsapp_message_user,otm.whatsapp.message user,model_otm_whatsapp_message,group_whatsapp_user,1,1,1,0
+access_otm_whatsapp_template_admin,otm.whatsapp.template admin,model_otm_whatsapp_template,group_whatsapp_administrator,1,1,1,1
+access_otm_whatsapp_template_manager,otm.whatsapp.template manager,model_otm_whatsapp_template,group_whatsapp_manager,1,1,1,0
+access_otm_whatsapp_template_user,otm.whatsapp.template user,model_otm_whatsapp_template,group_whatsapp_user,1,0,0,0
+access_otm_whatsapp_media_admin,otm.whatsapp.media admin,model_otm_whatsapp_media,group_whatsapp_administrator,1,1,1,1
+access_otm_whatsapp_media_user,otm.whatsapp.media user,model_otm_whatsapp_media,group_whatsapp_user,1,1,1,0

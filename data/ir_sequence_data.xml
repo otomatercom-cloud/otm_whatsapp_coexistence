@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- No internal sequence numbers are needed: otm.whatsapp.phone is keyed by
+         Meta's phone_number_id and otm.whatsapp.message by meta_message_id, both
+         already unique. File kept as an explicit extension point per Otomater
+         module conventions rather than left out of the manifest silently. -->
+</odoo>

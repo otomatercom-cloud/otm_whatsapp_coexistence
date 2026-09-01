@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        IMPORTANT: I don't have custom_leads_19's actual view XML (the base
+        form view's xmlid and its exact button_box structure) in this build
+        environment, so I cannot safely inherit and xpath into it without
+        risking the exact "ParseError: Element cannot be located in parent
+        view" class of install failure documented in erp_tooling finding
+        #12. Rather than guess the base view's xmlid (e.g.
+        "custom_leads_19.view_leads_logic_form" - not confirmed) and an
+        xpath expression into its button box, this ships as a STANDALONE
+        action instead: a normal list/form pair on leads.logic filtered to
+        records with a WhatsApp conversation, reachable from the WhatsApp
+        menu, with a link back via action_open_whatsapp(). Once you confirm
+        the base view's xmlid, I'll add a proper inherited smart button
+        exactly like the crm.lead version had.
+    -->
+    <record id="action_leads_logic_whatsapp" model="ir.actions.act_window">
+        <field name="name">Leads with WhatsApp Activity</field>
+        <field name="res_model">leads.logic</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('whatsapp_conversation_count', '&gt;', 0)]</field>
+    </record>
+</odoo>

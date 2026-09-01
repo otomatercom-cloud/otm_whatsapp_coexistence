@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Administrators/Managers: full company-scoped visibility -->
+    <record id="rule_whatsapp_phone_manager" model="ir.rule">
+        <field name="name">WhatsApp Phone: Manager sees company numbers</field>
+        <field name="model_id" ref="model_otm_whatsapp_phone"/>
+        <field name="groups" eval="[(4, ref('group_whatsapp_manager'))]"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <!-- Plain Users: only numbers they're explicitly assigned to -->
+    <record id="rule_whatsapp_phone_user" model="ir.rule">
+        <field name="name">WhatsApp Phone: User sees only assigned numbers</field>
+        <field name="model_id" ref="model_otm_whatsapp_phone"/>
+        <field name="groups" eval="[(4, ref('group_whatsapp_user'))]"/>
+        <!-- NOTE: only the direct user_ids assignment is used here, not a
+             team-based lookthrough - lead.team's internal member field
+             name isn't confirmed in this build environment (same caution
+             as leads_logic.py's phone-field note). Once you confirm it
+             (e.g. lead.team.member_ids or similar), extend this domain to
+             '|' in team members too. -->
+        <field name="domain_force">[('user_ids', 'in', [user.id])]</field>
+    </record>
+
+    <record id="rule_whatsapp_conversation_manager" model="ir.rule">
+        <field name="name">WhatsApp Conversation: Manager sees company conversations</field>
+        <field name="model_id" ref="model_otm_whatsapp_conversation"/>
+        <field name="groups" eval="[(4, ref('group_whatsapp_manager'))]"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="rule_whatsapp_conversation_user" model="ir.rule">
+        <field name="name">WhatsApp Conversation: User sees only own-number conversations</field>
+        <field name="model_id" ref="model_otm_whatsapp_conversation"/>
+        <field name="groups" eval="[(4, ref('group_whatsapp_user'))]"/>
+        <field name="domain_force">['|', ('phone_id.user_ids', 'in', [user.id]), ('assigned_user_id', '=', user.id)]</field>
+    </record>
+
+    <record id="rule_whatsapp_message_manager" model="ir.rule">
+        <field name="name">WhatsApp Message: Manager sees company messages</field>
+        <field name="model_id" ref="model_otm_whatsapp_message"/>
+        <field name="groups" eval="[(4, ref('group_whatsapp_manager'))]"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="rule_whatsapp_message_user" model="ir.rule">
+        <field name="name">WhatsApp Message: User sees only own-number messages</field>
+        <field name="model_id" ref="model_otm_whatsapp_message"/>
+        <field name="groups" eval="[(4, ref('group_whatsapp_user'))]"/>
+        <field name="domain_force">['|', ('phone_id.user_ids', 'in', [user.id]), ('conversation_id.assigned_user_id', '=', user.id)]</field>
+    </record>
+
+    <!-- Integration/Template configuration: administrators only via ACL (see csv); no extra record rule needed -->
+</odoo>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_whatsapp_contact_form" model="ir.ui.view">
+        <field name="name">otm.whatsapp.contact.form</field>
+        <field name="model">otm.whatsapp.contact</field>
+        <field name="arch" type="xml">
+            <form string="WhatsApp Contact">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="phone"/>
+                            <field name="wa_id"/>
+                            <field name="profile_name"/>
+                            <field name="opt_in_status"/>
+                        </group>
+                        <group string="Linked Records">
+                            <field name="partner_id"/>
+                            <field name="lead_id"/>
+                            <field name="student_details_id"/>
+                            <field name="admission_reference"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_whatsapp_contact_list" model="ir.ui.view">
+        <field name="name">otm.whatsapp.contact.list</field>
+        <field name="model">otm.whatsapp.contact</field>
+        <field name="arch" type="xml">
+            <list string="WhatsApp Contacts">
+                <field name="name"/>
+                <field name="phone"/>
+                <field name="opt_in_status"/>
+                <field name="partner_id"/>
+                <field name="lead_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_whatsapp_contact" model="ir.actions.act_window">
+        <field name="name">WhatsApp Contacts</field>
+        <field name="res_model">otm.whatsapp.contact</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

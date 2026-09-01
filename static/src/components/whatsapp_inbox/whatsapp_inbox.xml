@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="otm_whatsapp_coexistence.WhatsappInbox">
+        <div class="o_whatsapp_inbox d-flex h-100">
+            <div class="o_whatsapp_numbers border-end p-2" style="width: 220px;">
+                <h6 class="mb-2">WhatsApp Number</h6>
+                <div class="list-group">
+                    <a href="#" class="list-group-item list-group-item-action"
+                       t-att-class="{ active: state.selectedPhoneId === 'all' }"
+                       t-on-click.prevent="() => this.selectPhone('all')">
+                        All Numbers
+                    </a>
+                    <t t-foreach="state.phones" t-as="phone" t-key="phone.id">
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between"
+                           t-att-class="{ active: state.selectedPhoneId === phone.id }"
+                           t-on-click.prevent="() => this.selectPhone(phone.id)">
+                            <span><t t-esc="phone.display_phone_number or phone.name"/></span>
+                            <span t-if="phone.unread_count" class="badge bg-danger" t-esc="phone.unread_count"/>
+                        </a>
+                    </t>
+                </div>
+            </div>
+            <div class="o_whatsapp_conversations border-end p-2" style="width: 300px; overflow-y: auto;">
+                <h6 class="mb-2">Conversations</h6>
+                <t t-foreach="state.conversations" t-as="conv" t-key="conv.id">
+                    <a href="#" class="list-group-item list-group-item-action d-block"
+                       t-att-class="{ active: state.selectedConversationId === conv.id }"
+                       t-on-click.prevent="() => this.openConversation(conv.id)">
+                        <div class="d-flex justify-content-between">
+                            <strong t-esc="conv.name"/>
+                            <span t-if="conv.unread_count" class="badge bg-danger" t-esc="conv.unread_count"/>
+                        </div>
+                        <small class="text-muted text-truncate d-block" t-esc="conv.last_message"/>
+                    </a>
+                </t>
+            </div>
+            <div class="o_whatsapp_thread flex-grow-1 p-2 d-flex flex-column">
+                <t t-if="selectedConversation">
+                    <h6 class="mb-2" t-esc="selectedConversation.name"/>
+                    <div class="o_whatsapp_messages flex-grow-1" style="overflow-y: auto;">
+                        <t t-foreach="state.messages" t-as="msg" t-key="msg.id">
+                            <div t-att-class="'mb-2 d-flex ' + (msg.direction === 'out' ? 'justify-content-end' : 'justify-content-start')">
+                                <div t-att-class="'p-2 rounded ' + (msg.direction === 'out' ? 'bg-primary text-white' : 'bg-light')" style="max-width: 60%;">
+                                    <div t-esc="msg.body"/>
+                                    <small class="opacity-75" t-esc="msg.state"/>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                    <div class="d-flex mt-2">
+                        <input type="text" class="form-control me-2" placeholder="Type message..."
+                               t-model="state.draft"
+                               t-on-keydown="onDraftKeydown"/>
+                        <button class="btn btn-primary" t-on-click="sendMessage">Send</button>
+                    </div>
+                </t>
+                <t t-else="">
+                    <p class="text-muted">Select a conversation to view messages.</p>
+                </t>
+            </div>
+        </div>
+    </t>
+</templates>

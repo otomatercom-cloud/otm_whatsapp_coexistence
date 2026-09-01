@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_whatsapp_message_list" model="ir.ui.view">
+        <field name="name">otm.whatsapp.message.list</field>
+        <field name="model">otm.whatsapp.message</field>
+        <field name="arch" type="xml">
+            <list string="WhatsApp Messages">
+                <field name="create_date"/>
+                <field name="phone_id"/>
+                <field name="contact_id"/>
+                <field name="direction"/>
+                <field name="message_type"/>
+                <field name="body"/>
+                <field name="state" decoration-success="state in ('delivered','read')" decoration-danger="state == 'failed'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_whatsapp_message_form" model="ir.ui.view">
+        <field name="name">otm.whatsapp.message.form</field>
+        <field name="model">otm.whatsapp.message</field>
+        <field name="arch" type="xml">
+            <form string="WhatsApp Message">
+                <header>
+                    <button name="action_retry" type="object" string="Retry" class="btn-primary" invisible="state != 'failed'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="queued,sent,delivered,read"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="phone_id"/>
+                            <field name="conversation_id"/>
+                            <field name="direction"/>
+                            <field name="message_type"/>
+                        </group>
+                        <group>
+                            <field name="meta_message_id"/>
+                            <field name="sent_at"/>
+                            <field name="delivered_at"/>
+                            <field name="read_at"/>
+                        </group>
+                    </group>
+                    <group string="Content">
+                        <field name="body" nolabel="1"/>
+                    </group>
+                    <group string="Error" invisible="state != 'failed'">
+                        <field name="error_code"/>
+                        <field name="error_message"/>
+                        <field name="retry_count"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_whatsapp_message_search" model="ir.ui.view">
+        <field name="name">otm.whatsapp.message.search</field>
+        <field name="model">otm.whatsapp.message</field>
+        <field name="arch" type="xml">
+            <search string="WhatsApp Messages">
+                <field name="body"/>
+                <field name="phone_id"/>
+                <field name="conversation_id"/>
+                <filter name="failed" string="Failed" domain="[('state', '=', 'failed')]"/>
+                <filter name="outgoing" string="Outgoing" domain="[('direction', '=', 'out')]"/>
+                <separator/>
+                <group>
+                    <filter name="group_by_phone" string="Number" context="{'group_by': 'phone_id'}"/>
+                    <filter name="group_by_state" string="Status" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_whatsapp_message" model="ir.actions.act_window">
+        <field name="name">WhatsApp Messages</field>
+        <field name="res_model">otm.whatsapp.message</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

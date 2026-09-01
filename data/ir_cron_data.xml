@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ir_cron_whatsapp_process_queue" model="ir.cron">
+        <field name="name">WhatsApp: Process Outgoing Message Queue</field>
+        <field name="model_id" ref="model_otm_whatsapp_message"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_process_queue()</field>
+        <field name="interval_number">2</field>
+        <field name="interval_type">minutes</field>
+        <field name="active">True</field>
+    </record>
+
+    <record id="ir_cron_whatsapp_sync_templates" model="ir.cron">
+        <field name="name">WhatsApp: Sync Templates from Meta</field>
+        <field name="model_id" ref="model_otm_whatsapp_integration"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_sync_templates()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+    </record>
+</odoo>

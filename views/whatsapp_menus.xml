@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_whatsapp_root" name="WhatsApp" sequence="60" web_icon="otm_whatsapp_coexistence,static/description/icon.png"/>
+
+    <menuitem id="menu_whatsapp_inbox" name="Inbox" parent="menu_whatsapp_root" sequence="10"
+              action="action_whatsapp_inbox" groups="group_whatsapp_user"/>
+    <menuitem id="menu_whatsapp_conversation" name="Conversations" parent="menu_whatsapp_root" sequence="20"
+              action="action_whatsapp_conversation" groups="group_whatsapp_user"/>
+    <menuitem id="menu_whatsapp_contact" name="Contacts" parent="menu_whatsapp_root" sequence="30"
+              action="action_whatsapp_contact" groups="group_whatsapp_user"/>
+    <menuitem id="menu_whatsapp_message" name="Messages" parent="menu_whatsapp_root" sequence="40"
+              action="action_whatsapp_message" groups="group_whatsapp_manager"/>
+
+    <menuitem id="menu_whatsapp_configuration" name="Configuration" parent="menu_whatsapp_root" sequence="90"
+              groups="group_whatsapp_manager"/>
+    <menuitem id="menu_whatsapp_configuration_integration" name="WhatsApp Integration"
+              parent="menu_whatsapp_configuration" sequence="10"
+              action="action_whatsapp_integration" groups="group_whatsapp_administrator"/>
+    <menuitem id="menu_whatsapp_configuration_phone" name="WhatsApp Numbers"
+              parent="menu_whatsapp_configuration" sequence="20"
+              action="action_whatsapp_phone" groups="group_whatsapp_manager"/>
+    <menuitem id="menu_whatsapp_configuration_template" name="Templates"
+              parent="menu_whatsapp_configuration" sequence="30"
+              action="action_whatsapp_template" groups="group_whatsapp_manager"/>
+</odoo>

@@ -1,0 +1,10 @@
+.o_whatsapp_inbox {
+    height: 100%;
+    min-height: 500px;
+}
+.o_whatsapp_numbers, .o_whatsapp_conversations {
+    background-color: #f8f9fa;
+}
+.o_whatsapp_messages {
+    padding: 8px;
+}
