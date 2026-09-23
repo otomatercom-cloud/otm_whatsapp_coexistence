@@ -204,7 +204,37 @@ its candidates match — confirmed: `whatsapp_conversation_count` came back
 `0`, no exception, `action_open_whatsapp` returned `False` cleanly through
 a real RPC dispatch call.
 
+## Interactive messages (buttons/list) — added [date: this update]
+
+`otm.whatsapp.message` now supports Meta's real interactive message types
+(reply buttons and list menus), verified against Meta's official 2026 API
+and webhook reference docs, not guessed:
+
+- **Sending**: set `message_type='interactive'`, `interactive_kind` to
+  `'button'` or `'list'`, plus `interactive_buttons_json` (max 3, e.g.
+  `[{"id": "opt_a", "title": "Option A"}]`) or `interactive_list_button_text`
+  + `interactive_sections_json` (max 10 sections/10 rows total, e.g.
+  `[{"title": "Section", "rows": [{"id": "r1", "title": "Row 1",
+  "description": ""}]}]`). Optional `interactive_header`/
+  `interactive_footer`. Then `action_send_now()` exactly as for any other
+  message - no new send path, same queue/retry/status-tracking as before.
+- **Receiving**: a customer tapping a button or picking a list row arrives
+  as `message_type='interactive'`, `body` set to the tapped label, and the
+  new `interactive_reply_id` field set to the `id` you originally defined
+  - so a chatbot flow (or any code) can branch on the id without
+  re-parsing text.
+- New service methods: `MetaWhatsappClient.send_interactive_buttons()` /
+  `.send_interactive_list()` in `services/meta_whatsapp_client.py`.
+
+**This is an additive change only** - new fields, new optional code paths.
+Existing text/template/media sending and all existing inbound processing
+is untouched and re-verified unchanged (see Real Testing Performed below).
+Applying this to your live server is a normal module upgrade (`-u
+otm_whatsapp_coexistence`), no data migration needed - new fields default
+to empty/False on existing rows.
+
 ## Not yet done / open items
+
 
 - Automated `tests/` suite (TransactionCase/HttpCase) — the testing above
   was done via manual shell/HTTP scripts, not committed as a `--test-enable`

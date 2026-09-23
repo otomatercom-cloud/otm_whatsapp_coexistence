@@ -43,6 +43,21 @@
                     <group string="Content">
                         <field name="body" nolabel="1"/>
                     </group>
+                    <group string="Interactive Message" invisible="message_type != 'interactive'">
+                        <group>
+                            <field name="interactive_kind"/>
+                            <field name="interactive_header"/>
+                            <field name="interactive_footer"/>
+                            <field name="interactive_reply_id" invisible="not interactive_reply_id"/>
+                        </group>
+                        <group invisible="interactive_kind != 'button'">
+                            <field name="interactive_buttons_json" nolabel="1" placeholder='[{"id": "opt_a", "title": "Option A"}]'/>
+                        </group>
+                        <group invisible="interactive_kind != 'list'">
+                            <field name="interactive_list_button_text"/>
+                            <field name="interactive_sections_json" nolabel="1" placeholder='[{"title": "Section", "rows": [{"id": "r1", "title": "Row 1", "description": ""}]}]'/>
+                        </group>
+                    </group>
                     <group string="Error" invisible="state != 'failed'">
                         <field name="error_code"/>
                         <field name="error_message"/>

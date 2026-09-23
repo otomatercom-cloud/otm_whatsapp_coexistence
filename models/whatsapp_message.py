@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 import logging
 
 from odoo import api, fields, models
@@ -77,6 +78,38 @@ class OtmWhatsappMessage(models.Model):
     template_id = fields.Many2one("otm.whatsapp.template", string="Template")
     media_id = fields.Many2one("otm.whatsapp.media", string="Media")
     reply_to_id = fields.Many2one("otm.whatsapp.message", string="Reply To")
+
+    # --- Interactive (button/list) message support ---
+    # Structured fields rather than a single JSON blob so a chatbot flow
+    # node (or any other caller) can set them individually without hand-
+    # building Meta's payload shape itself. _build_interactive_payload()
+    # is the single place that shape lives.
+    interactive_kind = fields.Selection(
+        [("button", "Reply Buttons"), ("list", "List Menu")],
+        string="Interactive Kind",
+        help="Outgoing interactive messages (message_type='interactive') only.",
+    )
+    interactive_header = fields.Char(string="Interactive Header")
+    interactive_footer = fields.Char(string="Interactive Footer")
+    interactive_buttons_json = fields.Text(
+        string="Buttons (JSON)",
+        help="Outgoing button messages: JSON list of up to 3 {\"id\": ..., \"title\": ...} "
+        "objects, e.g. [{\"id\": \"opt_a\", \"title\": \"Option A\"}].",
+    )
+    interactive_list_button_text = fields.Char(
+        string="List Button Text",
+        help="The text on the button that opens the list picker, e.g. 'View Menu'.",
+    )
+    interactive_sections_json = fields.Text(
+        string="Sections (JSON)",
+        help="Outgoing list messages: JSON list of {\"title\": ..., \"rows\": [{\"id\", "
+        "\"title\", \"description\"}]} sections, per Meta's list-message shape.",
+    )
+    # Populated on INCOMING interactive replies (a customer tapping a
+    # button or picking a list row) - the raw id you defined when sending,
+    # so calling code (e.g. a chatbot flow) can branch on it without
+    # re-parsing `body`.
+    interactive_reply_id = fields.Char(string="Interactive Reply ID", readonly=True)
     user_id = fields.Many2one(
         "res.users", string="Sent By", default=lambda self: self.env.user
     )
@@ -118,6 +151,7 @@ class OtmWhatsappMessage(models.Model):
         )
         msg_type = wa_message.get("type", "text")
         body = ""
+        interactive_reply_id = False
         if msg_type == "text":
             body = wa_message.get("text", {}).get("body", "")
         elif msg_type in ("image", "video", "audio", "document", "sticker"):
@@ -125,6 +159,17 @@ class OtmWhatsappMessage(models.Model):
         elif msg_type == "location":
             loc = wa_message.get("location", {})
             body = "Location: %s, %s" % (loc.get("latitude"), loc.get("longitude"))
+        elif msg_type == "interactive":
+            # A customer tapped a reply button or picked a list row - shapes
+            # verified against Meta's real webhook reference
+            # (developers.facebook.com/documentation/business-messaging/
+            # whatsapp/webhooks/reference/messages/interactive):
+            # {"interactive": {"type": "button_reply", "button_reply":
+            #  {"id": ..., "title": ...}}} or the "list_reply" sibling.
+            interactive = wa_message.get("interactive", {})
+            reply = interactive.get("button_reply") or interactive.get("list_reply") or {}
+            body = reply.get("title") or "[interactive reply]"
+            interactive_reply_id = reply.get("id") or False
         else:
             body = "[%s]" % msg_type
 
@@ -137,6 +182,7 @@ class OtmWhatsappMessage(models.Model):
                 "body": body,
                 "meta_message_id": meta_id,
                 "state": "received",
+                "interactive_reply_id": interactive_reply_id,
             }
         )
         conversation.write(
@@ -222,6 +268,8 @@ class OtmWhatsappMessage(models.Model):
                     self.media_id,
                     caption=self.body,
                 )
+            elif self.message_type == "interactive" and self.interactive_kind:
+                result = self._send_interactive(client)
             else:
                 result = client.send_text(
                     self.phone_id, self.conversation_id.contact_id.phone, self.body or ""
@@ -251,6 +299,39 @@ class OtmWhatsappMessage(models.Model):
             {"last_message": self.body or "[%s]" % self.message_type, "last_message_date": fields.Datetime.now()}
         )
         return True
+
+    def _send_interactive(self, client):
+        """Parses interactive_buttons_json / interactive_sections_json and
+        dispatches to the matching Meta client method. JSON parsing errors
+        are returned in the same {"error": {...}} shape _send() already
+        expects from the Meta client, so a malformed payload fails the
+        message cleanly (queue/retry as normal) instead of raising past
+        the try/except in _send()."""
+        self.ensure_one()
+        to = self.conversation_id.contact_id.phone
+        if self.interactive_kind == "button":
+            try:
+                buttons = json.loads(self.interactive_buttons_json or "[]")
+            except (ValueError, TypeError):
+                return {"error": {"message": "interactive_buttons_json is not valid JSON"}}
+            if not buttons:
+                return {"error": {"message": "No buttons configured for this interactive message"}}
+            return client.send_interactive_buttons(
+                self.phone_id, to, self.body or "", buttons,
+                header=self.interactive_header or None, footer=self.interactive_footer or None,
+            )
+        if self.interactive_kind == "list":
+            try:
+                sections = json.loads(self.interactive_sections_json or "[]")
+            except (ValueError, TypeError):
+                return {"error": {"message": "interactive_sections_json is not valid JSON"}}
+            if not sections:
+                return {"error": {"message": "No sections configured for this interactive message"}}
+            return client.send_interactive_list(
+                self.phone_id, to, self.body or "", self.interactive_list_button_text or "Choose",
+                sections, header=self.interactive_header or None, footer=self.interactive_footer or None,
+            )
+        return {"error": {"message": "Unknown interactive_kind %r" % self.interactive_kind}}
 
     def _mark_failed(self, error_message, code=False):
         self.write(

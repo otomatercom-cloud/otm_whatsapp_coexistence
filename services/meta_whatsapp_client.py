@@ -132,6 +132,55 @@ class MetaWhatsappClient:
         }
         return self._post("%s/messages" % phone.phone_number_id, payload)
 
+    def send_interactive_buttons(self, phone, to, body, buttons, header=None, footer=None):
+        """`buttons`: list of {"id": str, "title": str}, max 3 - Meta hard caps
+        both the count and each title at 20 characters; verified against
+        developers.facebook.com/documentation/business-messaging/whatsapp/
+        messages/interactive-reply-buttons-messages."""
+        payload = {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": to,
+            "type": "interactive",
+            "interactive": {
+                "type": "button",
+                "body": {"text": body},
+                "action": {
+                    "buttons": [
+                        {"type": "reply", "reply": {"id": b["id"], "title": b["title"][:20]}}
+                        for b in buttons[:3]
+                    ]
+                },
+            },
+        }
+        if header:
+            payload["interactive"]["header"] = {"type": "text", "text": header}
+        if footer:
+            payload["interactive"]["footer"] = {"text": footer}
+        return self._post("%s/messages" % phone.phone_number_id, payload)
+
+    def send_interactive_list(self, phone, to, body, button_text, sections, header=None, footer=None):
+        """`sections`: list of {"title": str, "rows": [{"id","title","description"}]} -
+        Meta caps at 10 sections and 10 rows total across all sections combined;
+        verified against developers.facebook.com/documentation/business-
+        messaging/whatsapp/messages/interactive-list-messages."""
+        payload = {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": to,
+            "type": "interactive",
+            "interactive": {
+                "type": "list",
+                "body": {"text": body},
+                "action": {"button": button_text[:20], "sections": sections},
+            },
+        }
+        if header:
+            payload["interactive"]["header"] = {"type": "text", "text": header}
+        if footer:
+            payload["interactive"]["footer"] = {"text": footer}
+        return self._post("%s/messages" % phone.phone_number_id, payload)
+
     def upload_media(self, phone, file_content, mime_type, filename):
         files = {"file": (filename, file_content, mime_type)}
         data = {"messaging_product": "whatsapp"}
