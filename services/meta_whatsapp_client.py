@@ -101,13 +101,44 @@ class MetaWhatsappClient:
         }
         return self._post("%s/messages" % phone.phone_number_id, payload)
 
-    def send_template(self, phone, to, template):
-        import json
+    def send_template(self, phone, to, template, body_params=None, header_param=None):
+        """Builds Meta's real SEND-TIME template payload.
 
-        try:
-            components = json.loads(template.components_json.replace("'", '"')) if template.components_json else []
-        except Exception:  # noqa: BLE001
-            components = []
+        IMPORTANT (fixed real bug): the send-time `components` shape is
+        structurally different from the template DEFINITION Meta returns
+        from the message_templates list endpoint (which describes
+        HEADER/BODY/FOOTER/BUTTONS structure with {{1}} placeholders and
+        `example` values, not actual values to send). The previous version
+        of this method re-sent `template.components_json` (the raw
+        definition, stored via `str()` - not even valid JSON) straight back
+        to Meta as the send payload, which only happened to work for
+        templates with zero variables and would fail Meta's API validation
+        for any template using {{1}}, {{2}}, etc. - exactly the case a
+        personalized bulk-campaign send needs. Verified against Meta's real
+        docs (developers.facebook.com/documentation/business-messaging/
+        whatsapp/messages/message-templates): send-time components are
+        `[{"type": "body", "parameters": [{"type": "text", "text": "<value>"}]}]`
+        - plain ordered values, never the definition's placeholder text.
+
+        `body_params`: ordered list of values for the template's {{1}},
+        {{2}}, ... body placeholders (None/empty for a template with no
+        variables). `header_param`: single text value for a template whose
+        header component itself has a {{1}} placeholder.
+        """
+        components = []
+        if header_param not in (None, False, ""):
+            components.append(
+                {"type": "header", "parameters": [{"type": "text", "text": str(header_param)}]}
+            )
+        if body_params:
+            components.append(
+                {
+                    "type": "body",
+                    "parameters": [
+                        {"type": "text", "text": "" if v is None else str(v)} for v in body_params
+                    ],
+                }
+            )
         payload = {
             "messaging_product": "whatsapp",
             "to": to,
@@ -115,9 +146,10 @@ class MetaWhatsappClient:
             "template": {
                 "name": template.template_name,
                 "language": {"code": template.language},
-                "components": components,
             },
         }
+        if components:
+            payload["template"]["components"] = components
         return self._post("%s/messages" % phone.phone_number_id, payload)
 
     def send_media(self, phone, to, media_type, media, caption=False):

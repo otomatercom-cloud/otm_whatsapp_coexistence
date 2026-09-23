@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import re
 
 from odoo import api, fields, models
 
@@ -111,6 +112,29 @@ class OtmWhatsappTemplate(models.Model):
             "Add a mapping in whatsapp_template.py._STATUS_MAP.", raw,
         )
         return "other"
+
+    @api.model
+    def _parse_components_meta(self, components):
+        """`components`: the raw Meta template DEFINITION component list
+        (python list of dicts, as returned by the message_templates GET
+        endpoint - NOT the send-time shape). Returns (variable_count,
+        has_buttons) so callers (template sync, and any future bulk-send
+        feature that needs to know how many {{n}} values to collect) never
+        have to re-parse Meta's structure themselves. variable_count is the
+        highest {{n}} index found in the BODY component's text.
+        """
+        variable_count = 0
+        has_buttons = False
+        for comp in components or []:
+            ctype = (comp.get("type") or "").upper()
+            if ctype == "BODY":
+                text = comp.get("text") or ""
+                nums = [int(n) for n in re.findall(r"\{\{(\d+)\}\}", text)]
+                if nums:
+                    variable_count = max(variable_count, max(nums))
+            elif ctype == "BUTTONS":
+                has_buttons = True
+        return variable_count, has_buttons
 
     def action_sync_templates(self):
         """Delegates to otm.whatsapp.integration._sync_templates() so there is

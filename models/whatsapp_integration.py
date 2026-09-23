@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 import logging
 
 from odoo import api, fields, models
@@ -122,6 +123,8 @@ class OtmWhatsappIntegration(models.Model):
                 ],
                 limit=1,
             )
+            components = tpl.get("components") or []
+            variable_count, has_buttons = Template._parse_components_meta(components)
             vals = {
                 "integration_id": self.id,
                 "template_name": tpl.get("name"),
@@ -131,7 +134,14 @@ class OtmWhatsappIntegration(models.Model):
                 "raw_category": tpl.get("category") or False,
                 "raw_status": tpl.get("status") or False,
                 "meta_template_id": tpl.get("id"),
-                "components_json": str(tpl.get("components")),
+                # FIX: store real JSON (json.dumps), not Python's str(list) -
+                # the old str() output wasn't valid JSON at all (single
+                # quotes, "True"/"None") and was also the wrong shape to
+                # ever resend as-is (see meta_whatsapp_client.send_template).
+                # Kept purely for display/reference now.
+                "components_json": json.dumps(components),
+                "variable_count": variable_count,
+                "has_buttons": has_buttons,
             }
             if existing:
                 existing.write(vals)

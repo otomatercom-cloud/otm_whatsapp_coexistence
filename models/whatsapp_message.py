@@ -76,6 +76,17 @@ class OtmWhatsappMessage(models.Model):
     failed_at = fields.Datetime()
 
     template_id = fields.Many2one("otm.whatsapp.template", string="Template")
+    template_variables_json = fields.Text(
+        string="Template Variables (JSON)",
+        help="Outgoing template messages only: JSON list of ordered values for the "
+        "template's {{1}}, {{2}}, ... body placeholders, e.g. [\"John\", \"INV-102\"]. "
+        "Leave empty for a template with no variables.",
+    )
+    template_header_param = fields.Char(
+        string="Template Header Value",
+        help="Value for a template whose header component itself has a {{1}} "
+        "placeholder. Leave empty otherwise.",
+    )
     media_id = fields.Many2one("otm.whatsapp.media", string="Media")
     reply_to_id = fields.Many2one("otm.whatsapp.message", string="Reply To")
 
@@ -255,10 +266,18 @@ class OtmWhatsappMessage(models.Model):
         client = self.phone_id.get_client()
         try:
             if self.message_type == "template" and self.template_id:
+                body_params = None
+                if self.template_variables_json:
+                    try:
+                        body_params = json.loads(self.template_variables_json)
+                    except (ValueError, TypeError):
+                        body_params = None
                 result = client.send_template(
                     self.phone_id,
                     self.conversation_id.contact_id.phone,
                     self.template_id,
+                    body_params=body_params,
+                    header_param=self.template_header_param or None,
                 )
             elif self.message_type in ("image", "video", "audio", "document") and self.media_id:
                 result = client.send_media(
